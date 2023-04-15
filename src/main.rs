@@ -12,6 +12,7 @@ use text_game::{
     Format,
     Player,
     help_menu as display_help,
+    Colorize,
     Rc, Ref, RefCell, HashMap,
 };
 
@@ -45,7 +46,7 @@ fn main() {
     let l = get_locations();
     let mut player = Player::new(l);
 
-    let activate = YN::from_user("Do you want to start the game? [Y/N] ");
+    let activate = YN::from_user("Do you want to start the game? [Y/N] ".blue());
     if activate == No {
         println!("ok cya lol");
         return;
@@ -62,13 +63,15 @@ fn main() {
                     &cmd.clone().try_into().unwrap()
                 );
                 if new.is_none() {
-                    println!("You cannot go {:?} of here.", cmd);
-                } else {
-                    player.location = Rc::new(RefCell::new(new.unwrap()));
+                    let msg = format!("You cannot go {:?} of here.", cmd);
+                    println!("{}", msg.red());
+                    continue;
                 }
+                player.location = Rc::new(RefCell::new(new.unwrap()));
+
             }
             Cmd::Location => {
-                println!("You are at {:?}", player.location.borrow())
+                println!("You are at {}.", player.location.borrow().to_string().bold());
             },
             // TODO
             Cmd::Save => {

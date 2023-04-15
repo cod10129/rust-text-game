@@ -10,6 +10,8 @@ pub use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::Duration;
 
+pub use colored::Colorize;
+
 struct CutscenePart {
     msg: String,
     wait: Duration,
@@ -211,7 +213,7 @@ impl YN {
         }
     }
 
-    pub fn from_user(prompt: &str) -> YN {
+    pub fn from_user<T: fmt::Display> (prompt: T) -> YN {
         let string = input!(prompt).fmt();
         match YN::from_string(string) {
             Some(v) => v,
@@ -266,13 +268,13 @@ impl Command {
     }
 
     pub fn get() -> Command {
-        print!("Enter a command: ");
+        print!("{}", "Enter a command: ".bright_green());
         fout!();
 
         let mut buffer = Command::Quit;
         if Command::get_buffer(&mut buffer).is_err() {
             println!("Please enter a valid command.");
-            println!("Use help to see commands.");
+            println!("Use {} to see commands.", "help".bright_yellow());
             println!();
             return Command::get();
         }
@@ -289,7 +291,8 @@ pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject
         Some(v) => Some(v),
         None => {
             println!("That object does not exist.");
-            println!("Type objects to see all objects in this area.");
+            println!("Type {} to see all objects in this area.", "objects".bright_yellow());
+            println!();
             get_interact(objects)
         }
     }
