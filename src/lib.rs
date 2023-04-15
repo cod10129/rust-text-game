@@ -307,6 +307,8 @@ south: moves the player south
 east: moves the player east
 west: moves the player west
 location: displays your current location
+objects: displays all objects in your current location
+interact: interacts with an object in your current location
 save: saves the game (UNIMPLEMENTED)
 quit: quits the game
   ";
