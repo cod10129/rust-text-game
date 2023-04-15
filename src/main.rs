@@ -15,7 +15,7 @@ use text_game::{fout, input,
 fn get_locations() -> Rc<RefCell<Loc>> {
   let cave = Loc::new("Cave");
   let depths = Loc::new("Depths");
-  let boss_room = Loc::new("BOSS Room");
+  let boss_room = Loc::new("Boss Room");
   let treasure = Loc::new("Treasure Room");
   let spawn = Loc::new("Clearing");
   Loc::attach(&spawn, &cave, MC::South);
@@ -72,10 +72,10 @@ fn main() {
 fn input_i32(prompt: &str) -> i32 {
   let val = input!(prompt);
   match val.trim().parse() {
-    Ok(v) => return v,
+    Ok(v) => v,
     Err(_) => {
       println!("Please enter a number");
-      return input_i32(prompt);
+      input_i32(prompt)
     }
   }
 }

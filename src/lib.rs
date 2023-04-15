@@ -90,7 +90,7 @@ impl Location {
     self.e = Some(Rc::clone(other));
   }
 
-  pub fn traverse<'a> (&'a self, cmd: &MovementCommand) -> Option<Self> {
+  pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
     use MovementCommand::*;
     let new = match cmd {
       North => &self.n,
@@ -142,8 +142,8 @@ pub enum YN {
 impl YN {
   pub fn from_string(string: String) -> Option<YN> {
     match string.as_str() {
-      "y" | "yes" => Some(YN::Yes),
-      "n" | "no" => Some(YN::No),
+      "y" | "yes" => Some(Yes),
+      "n" | "no" => Some(No),
       _ => None
     }
   }
@@ -272,7 +272,6 @@ pub trait Format {
   fn fmt(&self) -> String;
 }
 impl Format for String {
-  /// Removes whitespace and lowercases the string
   fn fmt(&self) -> String {
     self.trim().to_ascii_lowercase()
   }
