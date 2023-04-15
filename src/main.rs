@@ -27,7 +27,7 @@ fn get_locations() -> Rc<RefCell<Loc>> {
   spawn
 }
 
-fn get_start_cutscene() -> Cutscene {
+fn get_test_cutscene() -> Cutscene {
   let mut scene = Cutscene::new();
   scene.add("Welcome to the game!\n", 2000);
   scene.add("You find yourself in a strange clearing.", 2000);
@@ -62,8 +62,7 @@ fn main() {
       },
       Cmd::Location => println!("You are at {:?}", (*locmap).clone().into_inner()),
       Cmd::Save => { 
-        get_start_cutscene().play();
-        // println!("This feature is currently not implemented.") 
+        println!("This feature is currently not implemented.") 
       },
       Cmd::Help => display_help(),
     }
