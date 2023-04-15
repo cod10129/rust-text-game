@@ -76,6 +76,10 @@ impl AreaObject {
             func
         }
     }
+
+    pub fn interact(&self, player: &mut Player) {
+        (self.func)(player);
+    }
 }
 
 #[derive(Clone)]
@@ -273,6 +277,21 @@ impl Command {
             return Command::get();
         }
         buffer
+    }
+}
+
+pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject> {
+    let object = input!("What do you want to interact with? ").fmt();
+    // Give an escape option for the user to cancel the interaction.
+    if object == String::from("cancel") { return None; }
+
+    match objects.get(&object) {
+        Some(v) => Some(v),
+        None => {
+            println!("That object does not exist.");
+            println!("Type objects to see all objects in this area.");
+            get_interact(objects)
+        }
     }
 }
 

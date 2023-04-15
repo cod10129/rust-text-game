@@ -3,11 +3,11 @@
 
 #[allow(unused_imports)]
 use text_game::{
-    fout, input,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc,
     AreaObject as AO,
+    get_interact,
     Cutscene,
     Format,
     Player,
@@ -42,8 +42,8 @@ fn get_test_cutscene() -> Cutscene {
 
 #[allow(unused_variables)]
 fn main() {
-    let loc = get_locations();
-    let mut player = Player::new(loc);
+    let l = get_locations();
+    let mut player = Player::new(l);
 
     let activate = YN::from_user("Do you want to start the game? [Y/N] ");
     if activate == No {
@@ -67,7 +67,9 @@ fn main() {
                     player.location = Rc::new(RefCell::new(new.unwrap()));
                 }
             }
-            Cmd::Location => println!("You are at {:?}", player.location.borrow()),
+            Cmd::Location => {
+                println!("You are at {:?}", player.location.borrow())
+            },
             // TODO
             Cmd::Save => {
                 println!("This feature is currently not implemented.")
@@ -79,27 +81,21 @@ fn main() {
                     println!("There are no objects here.");
                     continue;
                 }
+                // Sorts the objects alphabetically
                 let mut keys = objects.keys().collect::<Vec<_>>();
                 keys.sort_unstable();
                 for obj in keys {
                     println!("{}", obj);
                 }
             },
-            // TODO
             Cmd::Interact => {
-                println!("This feature is currently not implemented.")
-            },
-        }
-    }
-}
+                let objects = (*player.location).clone().into_inner().get_objects();
+                let object = get_interact(&objects);
 
-fn input_i32(prompt: &str) -> i32 {
-    let val = input!(prompt);
-    match val.trim().parse() {
-        Ok(v) => v,
-        Err(_) => {
-            println!("Please enter a number");
-            input_i32(prompt)
+                if object.is_none() { continue; }
+                // The case of object being None is handled, so unwrap() is fine.
+                object.unwrap().interact(&mut player);
+            },
         }
     }
 }

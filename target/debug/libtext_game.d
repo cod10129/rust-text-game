@@ -1,1 +1,0 @@
-C:\Users\David\AppData\Local\JetBrains\Projects\rust\rust-text-game\target\debug\libtext_game.rlib: C:\Users\David\AppData\Local\JetBrains\Projects\rust\rust-text-game\src\input.rs C:\Users\David\AppData\Local\JetBrains\Projects\rust\rust-text-game\src\lib.rs
