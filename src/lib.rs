@@ -6,6 +6,7 @@ pub use std::cell::Ref;
 pub use std::cell::RefCell;
 pub use std::ops::Deref;
 pub use std::rc::Rc;
+pub use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -38,6 +39,45 @@ impl Cutscene {
     }
 }
 
+pub struct Player {
+    pub location: Rc<RefCell<Location>>,
+}
+
+impl Player {
+    pub fn new(location: Rc<RefCell<Location>>) -> Self {
+        Self { location }
+    }
+}
+
+#[derive(Clone)]
+pub struct AreaObject {
+    name: String,
+    description: String,
+    func: fn(&mut Player),
+}
+
+impl fmt::Debug for AreaObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self}")
+    }
+}
+
+impl fmt::Display for AreaObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\n\n{}", self.name, self.description)
+    }
+}
+
+impl AreaObject {
+    pub fn new(name: &str, description: &str, func: fn(&mut Player)) -> Self {
+        Self {
+            name: name.to_string(),
+            description: description.to_string(),
+            func
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Location {
     n: Option<Rc<RefCell<Location>>>,
@@ -45,6 +85,7 @@ pub struct Location {
     w: Option<Rc<RefCell<Location>>>,
     e: Option<Rc<RefCell<Location>>>,
     name: String,
+    objects: HashMap<String, AreaObject>,
 }
 
 impl fmt::Display for Location {
@@ -60,13 +101,14 @@ impl fmt::Debug for Location {
 }
 
 impl Location {
-    pub fn new(name: &str) -> Rc<RefCell<Self>> {
+    pub fn new(name: &str, objects: HashMap<String, AreaObject>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
             n: None,
             s: None,
             w: None,
             e: None,
             name: name.to_string(),
+            objects,
         }))
     }
 
@@ -108,6 +150,19 @@ impl Location {
 
     pub fn travel(locmap: &Rc<RefCell<Location>>, direction: &MovementCommand) -> Option<Location> {
         locmap.borrow().traverse(direction)
+    }
+
+    pub fn add_object(&mut self, name: String, description: String, func: fn(&mut Player)) {
+        let new = AreaObject::new(&name, &description, func);
+        self.objects.insert(name, new);
+    }
+
+    pub fn get_object(&self, name: &str) -> Option<AreaObject> {
+        self.objects.get(name).cloned()
+    }
+
+    pub fn get_objects(&self) -> HashMap<String, AreaObject> {
+        self.objects.clone()
     }
 
     /// Attaches loc to other.
@@ -172,6 +227,8 @@ pub enum Command {
     West,
     Help,
     Location,
+    Objects,
+    Interact,
     Save,
     Quit,
 }
@@ -185,6 +242,8 @@ impl Command {
             "west" | "w" => Some(Command::West),
             "help" => Some(Command::Help),
             "location" | "l" => Some(Command::Location),
+            "objects" => Some(Command::Objects),
+            "interact" => Some(Command::Interact),
             "save" => Some(Command::Save),
             "quit" | "exit" | "close" => Some(Command::Quit),
             _ => None,

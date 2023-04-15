@@ -3,24 +3,25 @@
 
 #[allow(unused_imports)]
 use text_game::{
-    fout,
-    input,
-    Command as Cmd,
-    MovementCommand as MC,
+    fout, input,
+    Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc,
+    AreaObject as AO,
     Cutscene,
     Format,
+    Player,
     help_menu as display_help,
-    Rc, Ref, RefCell,
+    Rc, Ref, RefCell, HashMap,
 };
 
 fn get_locations() -> Rc<RefCell<Loc>> {
-    let cave = Loc::new("Cave");
-    let depths = Loc::new("Depths");
-    let boss_room = Loc::new("Boss Room");
-    let treasure = Loc::new("Treasure Room");
-    let spawn = Loc::new("Clearing");
+    let empty_map: HashMap<String, AO> = HashMap::new();
+    let cave = Loc::new("Cave", empty_map.clone());
+    let depths = Loc::new("Depths", empty_map.clone());
+    let boss_room = Loc::new("Boss Room", empty_map.clone());
+    let treasure = Loc::new("Treasure Room", empty_map.clone());
+    let spawn = Loc::new("Clearing", empty_map.clone());
     Loc::attach(&spawn, &cave, MC::South);
     Loc::attach(&cave, &depths, MC::South);
     Loc::attach(&depths, &boss_room, MC::East);
@@ -41,7 +42,8 @@ fn get_test_cutscene() -> Cutscene {
 
 #[allow(unused_variables)]
 fn main() {
-    let mut locmap = get_locations();
+    let loc = get_locations();
+    let mut player = Player::new(loc);
 
     let activate = YN::from_user("Do you want to start the game? [Y/N] ");
     if activate == No {
@@ -55,19 +57,38 @@ fn main() {
         match cmd {
             Cmd::Quit => break,
             Cmd::North | Cmd::South | Cmd::East | Cmd::West => {
-                let loc = (*locmap).clone().into_inner();
-                let new = Loc::travel(&locmap, &cmd.clone().try_into().unwrap());
+                let new = Loc::travel(
+                    &player.location,
+                    &cmd.clone().try_into().unwrap()
+                );
                 if new.is_none() {
                     println!("You cannot go {:?} of here.", cmd);
                 } else {
-                    locmap = Rc::new(RefCell::new(new.unwrap()));
+                    player.location = Rc::new(RefCell::new(new.unwrap()));
                 }
             }
-            Cmd::Location => println!("You are at {:?}", (*locmap).clone().into_inner()),
+            Cmd::Location => println!("You are at {:?}", player.location.borrow()),
+            // TODO
             Cmd::Save => {
                 println!("This feature is currently not implemented.")
             }
             Cmd::Help => display_help(),
+            Cmd::Objects => {
+                let objects = player.location.borrow().get_objects();
+                if objects.is_empty() {
+                    println!("There are no objects here.");
+                    continue;
+                }
+                let mut keys = objects.keys().collect::<Vec<_>>();
+                keys.sort_unstable();
+                for obj in keys {
+                    println!("{}", obj);
+                }
+            },
+            // TODO
+            Cmd::Interact => {
+                println!("This feature is currently not implemented.")
+            },
         }
     }
 }
