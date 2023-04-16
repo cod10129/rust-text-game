@@ -284,8 +284,6 @@ impl Command {
 
 pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject> {
     let object = input!("What do you want to interact with? ").fmt();
-    // Give an escape option for the user to cancel the interaction.
-    if object == String::from("cancel") { return None; }
 
     match objects.get(&object) {
         Some(v) => Some(v),
@@ -293,28 +291,52 @@ pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject
             println!("That object does not exist.");
             println!("Type {} to see all objects in this area.", "objects".bright_yellow());
             println!();
-            get_interact(objects)
+            None
         }
     }
 }
 
+#[allow(unused_variables)]
 pub fn help_menu() {
-    let msg = "
---------------- HELP MENU ---------------
+    let lines = [
+        "--------------- HELP MENU ---------------".cyan().to_string(),
+        "".to_string(),
+        "Commands:".to_string(),
+        "".to_string(),
+        "help: displays this menu".cyan().to_string(),
+        "north: moves the player north".cyan().to_string(),
+        "south: moves the player south".cyan().to_string(),
+        "east: moves the player east".cyan().to_string(),
+        "west: moves the player west".cyan().to_string(),
+        "location: displays your current location".cyan().to_string(),
+        "objects: displays all objects in your current location".cyan().to_string(),
+        "interact: interacts with an object in your current location".cyan().to_string(),
+        format!("{} {}", "save: saves the game".cyan(), "(UNIMPLEMENTED)".red()),
+        "quit: quits the game".cyan().to_string(),
+    ];
+    let mut msg = String::new();
+    for line in lines {
+        msg.push_str(&line);
+        msg.push_str("\n");
+    }
+    /*
+    let mut msg = format!("
+{top}
 
 Commands:
 
-help: displays this menu
-north: moves the player north
-south: moves the player south
-east: moves the player east
-west: moves the player west
-location: displays your current location
-objects: displays all objects in your current location
-interact: interacts with an object in your current location
-save: saves the game (UNIMPLEMENTED)
-quit: quits the game
-  ";
+{help}
+{north}
+{south}
+{east}
+{west}
+{location}
+{objects}
+{interact}
+{save}
+{quit}
+");
+    */
     println!("{msg}");
 }
 

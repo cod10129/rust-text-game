@@ -22,7 +22,11 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     let depths = Loc::new("Depths", empty_map.clone());
     let boss_room = Loc::new("Boss Room", empty_map.clone());
     let treasure = Loc::new("Treasure Room", empty_map.clone());
+    let village_road = Loc::new("Village Road", empty_map.clone());
+    let village = Loc::new("Village", empty_map.clone());
     let spawn = Loc::new("Clearing", empty_map.clone());
+    Loc::attach(&spawn, &village_road, MC::West);
+    Loc::attach(&village_road, &village, MC::West);
     Loc::attach(&spawn, &cave, MC::South);
     Loc::attach(&cave, &depths, MC::South);
     Loc::attach(&depths, &boss_room, MC::East);
@@ -41,7 +45,6 @@ fn get_test_cutscene() -> Cutscene {
     scene
 }
 
-#[allow(unused_variables)]
 fn main() {
     let l = get_locations();
     let mut player = Player::new(l);
