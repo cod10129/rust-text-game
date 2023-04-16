@@ -3,10 +3,10 @@
 
 #[allow(unused_imports)]
 use text_game::{
+    nmsg,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
-    Location as Loc,
-    AreaObject as AO,
+    Location as Loc, AreaObject as AO,
     get_interact,
     Cutscene,
     Format,
@@ -16,14 +16,29 @@ use text_game::{
     Rc, Ref, RefCell, HashMap,
 };
 
+fn get_test_npc() -> AO {
+    let dialogue = |_: &mut Player| {
+        let name = "Test NPC".blue();
+        let mut scene = Cutscene::new();
+        scene.add(&nmsg!(name, "Hello!"), 500);
+        scene.add(&nmsg!(name, "Did you know that you can use shortened forms of commands?"), 1500);
+        scene.add(&nmsg!(name, format!("For example, you can type {} instead of {}.", "n".yellow(), "north".yellow())), 1500);
+        scene.add(&nmsg!(name, format!("You can even type {} to interact with things!", "i".yellow())), 1500);
+
+        scene.play();
+    };
+    AO::new(&"Test NPC".blue(), "An NPC for testing purposes.", dialogue)
+}
+
 fn get_locations() -> Rc<RefCell<Loc>> {
-    let empty_map: HashMap<String, AO> = HashMap::new();
+    let empty_map = HashMap::new();
     let cave = Loc::new("Cave", empty_map.clone());
     let depths = Loc::new("Depths", empty_map.clone());
     let boss_room = Loc::new("Boss Room", empty_map.clone());
     let treasure = Loc::new("Treasure Room", empty_map.clone());
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
+    village.borrow_mut().add_object(get_test_npc());
     let spawn = Loc::new("Clearing", empty_map.clone());
     Loc::attach(&spawn, &village_road, MC::West);
     Loc::attach(&village_road, &village, MC::West);
@@ -91,7 +106,7 @@ fn main() {
                 let mut keys = objects.keys().collect::<Vec<_>>();
                 keys.sort_unstable();
                 for obj in keys {
-                    println!("{}", obj);
+                    println!("{}", objects.get(obj).unwrap().get_name());
                 }
             },
             Cmd::Interact => {

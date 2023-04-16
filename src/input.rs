@@ -19,16 +19,6 @@ macro_rules! input {
             .expect("Should be able to read line");
         buf
     }};
-    ($s:ident) => {{
-        print!("{}", $s);
-        fout!();
-        input!()
-    }};
-    ($s:literal) => {{
-        print!($s);
-        fout!();
-        input!()
-    }};
     ($s:expr) => {{
         print!("{}", $s);
         fout!();

@@ -12,6 +12,14 @@ use std::time::Duration;
 
 pub use colored::Colorize;
 
+#[macro_export]
+/// Formats to {name}: {msg}
+macro_rules! nmsg {
+    ($name:expr, $msg:expr) => {
+        format!("{}: {}", $name, $msg);
+    }
+}
+
 struct CutscenePart {
     msg: String,
     wait: Duration,
@@ -26,10 +34,10 @@ impl Cutscene {
         Self { data: Vec::new() }
     }
 
-    pub fn add(&mut self, msg: &str, wait_millis: u16) {
+    pub fn add(&mut self, msg: &str, wait_ms: u16) {
         self.data.push(CutscenePart {
             msg: msg.to_string(),
-            wait: Duration::from_millis(wait_millis.into()),
+            wait: Duration::from_millis(wait_ms.into()),
         })
     }
 
@@ -43,11 +51,22 @@ impl Cutscene {
 
 pub struct Player {
     pub location: Rc<RefCell<Location>>,
+    // Different objects (like doors)
+    // can access these flags to determine their state.
+    // Say, defeating an enemy can set a certain flag to true,
+    // which creates a connection when a door is used.
+    pub flags: Vec<bool>
 }
 
 impl Player {
     pub fn new(location: Rc<RefCell<Location>>) -> Self {
-        Self { location }
+        Self {
+            location,
+            // 10 placeholder flags
+            // For every object that uses a flag,
+            // you need to check if there is space
+            flags: vec![false; 10]
+        }
     }
 }
 
@@ -81,6 +100,10 @@ impl AreaObject {
 
     pub fn interact(&self, player: &mut Player) {
         (self.func)(player);
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
     }
 }
 
@@ -158,9 +181,8 @@ impl Location {
         locmap.borrow().traverse(direction)
     }
 
-    pub fn add_object(&mut self, name: String, description: String, func: fn(&mut Player)) {
-        let new = AreaObject::new(&name, &description, func);
-        self.objects.insert(name, new);
+    pub fn add_object(&mut self, obj: AreaObject) {
+        self.objects.insert(obj.name.clone().fmt(), obj);
     }
 
     pub fn get_object(&self, name: &str) -> Option<AreaObject> {
@@ -248,8 +270,8 @@ impl Command {
             "west" | "w" => Some(Command::West),
             "help" => Some(Command::Help),
             "location" | "l" => Some(Command::Location),
-            "objects" => Some(Command::Objects),
-            "interact" => Some(Command::Interact),
+            "objects" | "o" => Some(Command::Objects),
+            "interact" | "i" => Some(Command::Interact),
             "save" => Some(Command::Save),
             "quit" | "exit" | "close" => Some(Command::Quit),
             _ => None,
@@ -296,7 +318,6 @@ pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject
     }
 }
 
-#[allow(unused_variables)]
 pub fn help_menu() {
     let lines = [
         "--------------- HELP MENU ---------------".cyan().to_string(),
@@ -319,24 +340,6 @@ pub fn help_menu() {
         msg.push_str(&line);
         msg.push_str("\n");
     }
-    /*
-    let mut msg = format!("
-{top}
-
-Commands:
-
-{help}
-{north}
-{south}
-{east}
-{west}
-{location}
-{objects}
-{interact}
-{save}
-{quit}
-");
-    */
     println!("{msg}");
 }
 
