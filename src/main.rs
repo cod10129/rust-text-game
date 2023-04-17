@@ -3,7 +3,7 @@
 
 #[allow(unused_imports)]
 use text_game::{
-    nmsg,
+    nmsg, monologue, cutscene,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO,
@@ -17,17 +17,16 @@ use text_game::{
 };
 
 fn get_test_npc() -> AO {
-    let dialogue = |_: &mut Player| {
-        let name = "Test NPC".blue();
-        let mut scene = Cutscene::new();
-        scene.add(&nmsg!(name, "Hello!"), 500);
-        scene.add(&nmsg!(name, "Did you know that you can use shortened forms of commands?"), 1500);
-        scene.add(&nmsg!(name, format!("For example, you can type {} instead of {}.", "n".yellow(), "north".yellow())), 1500);
-        scene.add(&nmsg!(name, format!("You can even type {} to interact with things!", "i".yellow())), 1500);
-
-        scene.play();
+    let text = |_: &mut Player| {
+        let messages: Vec<(String, u16)> = vec![
+            ("Hello!".into(), 750),
+            ("Did you know that you can use shortened forms of commands?".into(), 1250),
+            (format!("For example, you can type {} instead of {}.", "n".yellow(), "north".yellow()), 1500),
+            (format!("You can even type {} to interact with things!", "i".yellow()), 1500),
+        ];
+        monologue!("Test NPC".blue(), messages).play()
     };
-    AO::new(&"Test NPC".blue(), "An NPC for testing purposes.", dialogue)
+    AO::new(&"Test NPC", &"An NPC for testing purposes.", text)
 }
 
 fn get_locations() -> Rc<RefCell<Loc>> {
@@ -40,6 +39,13 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     let village = Loc::new("Village", empty_map.clone());
     village.borrow_mut().add_object(get_test_npc());
     let spawn = Loc::new("Clearing", empty_map.clone());
+    /*
+    spawn.borrow_mut().add_object(
+        AO::new(
+            "Dev Test",
+        )
+    );
+     */
     Loc::attach(&spawn, &village_road, MC::West);
     Loc::attach(&village_road, &village, MC::West);
     Loc::attach(&spawn, &cave, MC::South);
@@ -52,12 +58,11 @@ fn get_locations() -> Rc<RefCell<Loc>> {
 }
 
 fn get_test_cutscene() -> Cutscene {
-    let mut scene = Cutscene::new();
-    scene.add("Welcome to the game!\n", 2000);
-    scene.add("You find yourself in a strange clearing.", 2000);
-    scene.add("There is a deep cave nearby.", 1500);
-
-    scene
+    cutscene![
+        ("Welcome to the game!\n", 2000),
+        ("You find yourself in a strange clearing.", 2000),
+        ("There is a deep cave nearby.", 1500)
+    ]
 }
 
 fn main() {

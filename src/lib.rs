@@ -20,6 +20,19 @@ macro_rules! nmsg {
     }
 }
 
+#[macro_export]
+/// monologue! takes a name (String) and messages (Vec<(String, u16)>).
+/// It returns a Cutscene that contains the messages.
+macro_rules! monologue {
+    ($name: expr, $messages: expr ) => {{
+        let mut scene = Cutscene::new();
+        for (msg, wait) in $messages {
+            scene.add(&nmsg!($name, msg.as_str()), wait);
+        }
+        scene
+    }};
+}
+
 struct CutscenePart {
     msg: String,
     wait: Duration,
@@ -49,19 +62,38 @@ impl Cutscene {
     }
 }
 
+#[macro_export]
+/// cutscene! takes some messages (String, u16), and returns
+/// a cutscene containing those messages
+macro_rules! cutscene {
+    ( $( $message: expr ),* ) => {{
+        let mut scene = Cutscene::new();
+        $(
+            scene.add($message.0, $message.1);
+        )*
+        scene
+    }}
+}
+
 pub struct Player {
     pub location: Rc<RefCell<Location>>,
+    pub health: u16,
+    pub max_health: u16,
+    pub xp: u16,
     // Different objects (like doors)
     // can access these flags to determine their state.
     // Say, defeating an enemy can set a certain flag to true,
     // which creates a connection when a door is used.
-    pub flags: Vec<bool>
+    pub flags: Vec<bool>,
 }
 
 impl Player {
     pub fn new(location: Rc<RefCell<Location>>) -> Self {
         Self {
             location,
+            health: 10,
+            max_health: 10,
+            xp: 0,
             // 10 placeholder flags
             // For every object that uses a flag,
             // you need to check if there is space
@@ -79,7 +111,7 @@ pub struct AreaObject {
 
 impl fmt::Debug for AreaObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{self}")
+        write!(f, "AreaObject {{\n\tname: {}\n\tdescription: {}\n}}", self.name, self.description)
     }
 }
 
