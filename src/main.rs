@@ -44,7 +44,8 @@ fn get_locations() -> Rc<RefCell<Loc>> {
             "Dev Test",
             "This object triggers test code for development purposes.",
             |_: &mut Player| {
-                eprintln!("Triggering test cutscene..\n");
+                // INSERT TEST CODE HERE
+                eprintln!("Triggering test cutscene...\n");
                 get_test_cutscene().play();
             }
         )
@@ -72,7 +73,7 @@ fn main() {
     let l = get_locations();
     let mut player = Player::new(l);
 
-    let activate = YN::from_user("Do you want to start the game? [Y/N] ".blue());
+    let activate = YN::from_user("Do you want to start the game? [Y/N] ".blue().to_string().as_str());
     if activate == No {
         println!("ok cya lol");
         return;

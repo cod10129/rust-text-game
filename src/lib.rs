@@ -267,7 +267,7 @@ impl YN {
         }
     }
 
-    pub fn from_user<T: fmt::Display> (prompt: T) -> YN {
+    pub fn from_user(prompt: &str) -> YN {
         let string = input!(prompt).fmt();
         match YN::from_string(string) {
             Some(v) => v,
