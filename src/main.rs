@@ -39,13 +39,16 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     let village = Loc::new("Village", empty_map.clone());
     village.borrow_mut().add_object(get_test_npc());
     let spawn = Loc::new("Clearing", empty_map.clone());
-    /*
     spawn.borrow_mut().add_object(
         AO::new(
             "Dev Test",
+            "This object triggers test code for development purposes.",
+            |_: &mut Player| {
+                eprintln!("Triggering test cutscene..\n");
+                get_test_cutscene().play();
+            }
         )
     );
-     */
     Loc::attach(&spawn, &village_road, MC::West);
     Loc::attach(&village_road, &village, MC::West);
     Loc::attach(&spawn, &cave, MC::South);

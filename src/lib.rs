@@ -301,7 +301,7 @@ impl Command {
             "east" | "e" => Some(Command::East),
             "west" | "w" => Some(Command::West),
             "help" => Some(Command::Help),
-            "location" | "l" => Some(Command::Location),
+            "location" | "l" | "loc" => Some(Command::Location),
             "objects" | "o" => Some(Command::Objects),
             "interact" | "i" => Some(Command::Interact),
             "save" => Some(Command::Save),
@@ -354,7 +354,7 @@ pub fn help_menu() {
     let lines = [
         "--------------- HELP MENU ---------------".cyan().to_string(),
         "".to_string(),
-        "Commands:".to_string(),
+        "Commands:".cyan().to_string(),
         "".to_string(),
         "help: displays this menu".cyan().to_string(),
         "north: moves the player north".cyan().to_string(),
@@ -367,12 +367,9 @@ pub fn help_menu() {
         format!("{} {}", "save: saves the game".cyan(), "(UNIMPLEMENTED)".red()),
         "quit: quits the game".cyan().to_string(),
     ];
-    let mut msg = String::new();
     for line in lines {
-        msg.push_str(&line);
-        msg.push_str("\n");
+        println!("{line}");
     }
-    println!("{msg}");
 }
 
 #[derive(Debug, Clone)]
