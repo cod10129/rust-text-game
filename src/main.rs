@@ -7,20 +7,20 @@ use text_game::{
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO,
+    ObjectHolder,
     get_interact,
     Cutscene,
-    Format,
     Player,
     help_menu as display_help,
     Colorize,
-    Rc, Ref, RefCell, HashMap,
+    Rc, RefCell, HashMap,
 };
 
 fn get_test_npc() -> AO {
     let text = |_: &mut Player| {
         let messages: Vec<(String, u16)> = vec![
             ("Hello!".into(), 750),
-            ("Did you know that you can use shortened forms of commands?".into(), 1250),
+            ("Did you know that you can use shortened forms of commands?".into(), 1500),
             (format!("For example, you can type {} instead of {}.", "n".yellow(), "north".yellow()), 1500),
             (format!("You can even type {} to interact with things!", "i".yellow()), 1500),
         ];
@@ -37,9 +37,9 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     let treasure = Loc::new("Treasure Room", empty_map.clone());
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
-    village.borrow_mut().add_object(get_test_npc());
+    village.add_object(get_test_npc());
     let spawn = Loc::new("Clearing", empty_map.clone());
-    spawn.borrow_mut().add_object(
+    spawn.add_object(
         AO::new(
             "Dev Test",
             "This object triggers test code for development purposes.",

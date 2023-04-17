@@ -251,6 +251,26 @@ impl Location {
     }
 }
 
+pub trait ObjectHolder {
+    fn add_object(&self, obj: AreaObject);
+    fn get_object(&self, name: &str) -> Option<AreaObject>;
+    fn get_objects(&self) -> HashMap<String, AreaObject>;
+}
+
+impl ObjectHolder for Rc<RefCell<Location>> {
+    fn add_object(&self, obj: AreaObject) {
+        self.borrow_mut().add_object(obj);
+    }
+
+    fn get_object(&self, name: &str) -> Option<AreaObject> {
+        self.borrow().get_object(name)
+    }
+
+    fn get_objects(&self) -> HashMap<String, AreaObject> {
+        self.borrow().get_objects()
+    }
+}
+
 pub use YN::*;
 #[derive(Debug, PartialEq)]
 pub enum YN {
