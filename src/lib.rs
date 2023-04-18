@@ -121,7 +121,7 @@ pub struct Player {
     // can access these flags to determine their state.
     // Say, defeating an enemy can set a certain flag to true,
     // which creates a connection when a door is used.
-    pub flags: Vec<bool>,
+    pub flags: HashMap<String, bool>,
 }
 
 impl Player {
@@ -135,7 +135,7 @@ impl Player {
             // 10 placeholder flags
             // For every object that uses a flag,
             // you need to check if there is space
-            flags: vec![false; 10]
+            flags: HashMap::new()
         }
     }
 }
@@ -174,6 +174,10 @@ impl AreaObject {
 
     pub fn get_name(&self) -> String {
         self.name.clone()
+    }
+
+    pub fn get_desc(&self) -> String {
+        self.description.clone()
     }
 }
 
@@ -365,6 +369,7 @@ pub enum Command {
     Location,
     Objects,
     Interact,
+    Examine,
     Save,
     Quit,
 }
@@ -378,9 +383,10 @@ impl TryFrom<String> for Command {
             "east" | "e" => Ok(Command::East),
             "west" | "w" => Ok(Command::West),
             "help" => Ok(Command::Help),
-            "location" | "l" | "loc" => Ok(Command::Location),
+            "location" | "loc" | "l" => Ok(Command::Location),
             "objects" | "o" => Ok(Command::Objects),
             "interact" | "i" => Ok(Command::Interact),
+            "examine" => Ok(Command::Examine),
             "save" => Ok(Command::Save),
             "quit" | "exit" | "close" => Ok(Command::Quit),
             _ => Err(()),
@@ -410,8 +416,8 @@ impl Command {
     }
 }
 
-pub fn get_interact(objects: &HashMap<String, AreaObject>) -> Option<&AreaObject> {
-    let object = input!("What do you want to interact with? ").fmt();
+pub fn get_object_user<'a> (prompt_end: &str, objects: &'a HashMap<String, AreaObject>) -> Option<&'a AreaObject> {
+    let object = input!(format!("What do you want to {} ", prompt_end)).fmt();
 
     match objects.get(&object) {
         Some(v) => Some(v),
@@ -438,6 +444,7 @@ pub fn help_menu() {
         cmd_desc!("location", "displays your current location"),
         cmd_desc!("objects", "displays all objects in your current location"),
         cmd_desc!("interact", "interacts with an object in your current location"),
+        cmd_desc!("examine", "examines an object in your current location"),
         cmd_desc!("save", format!("{} {}", "saves the game".cyan(), "(UNIMPLEMENTED)".red())),
         cmd_desc!("quit", "quits the game"),
     ];

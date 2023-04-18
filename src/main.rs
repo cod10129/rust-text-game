@@ -8,7 +8,8 @@ use text_game::{
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO, Enemy,
     ObjectHolder,
-    get_interact, process_battle, help_menu, death_msg,
+    process_battle, help_menu, death_msg,
+    get_object_user as get_obj_user,
     Cutscene,
     Player,
     Colorize,
@@ -48,11 +49,44 @@ fn get_test_enemy() -> AO {
     AO::new("Not Goomba", "An enemy for testing purposes.", battle)
 }
 
+fn boss() -> AO {
+    let battle = |p: &mut Player| {
+        let mut enemy = Enemy::new(
+            "BOSS".red().to_string(),
+            8,
+            |hp: u16| {
+                if hp <= 1 { 2 }
+                else { 1 }
+            },
+            10,
+            0.00
+        );
+        process_battle(p, &mut enemy);
+        if p.health <= 0 { return; }
+        sleep!(750);
+        cutscene![
+            ("The lock on the north door falls off.", 1000)
+        ].play();
+        p.flags.insert("treasure1".to_string(), true);
+    };
+
+    AO::new("BOSS", "THE BOSS", battle)
+}
+
+fn treasure_door() -> AO {
+    let open = |_p: &mut Player| {
+        
+    };
+
+    AO::new("North Door", "A locked door that leads north.", open)
+}
+
 fn get_locations() -> Rc<RefCell<Loc>> {
     let empty_map = HashMap::new();
     let cave = Loc::new("Cave", empty_map.clone());
     let depths = Loc::new("Depths", empty_map.clone());
     let boss_room = Loc::new("Boss Room", empty_map.clone());
+    boss_room.add_object(boss());
     let treasure = Loc::new("Treasure Room", empty_map.clone());
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
@@ -139,8 +173,8 @@ fn main() {
                 }
             },
             Cmd::Interact => {
-                let objects = (*player.location).clone().into_inner().get_objects();
-                let object = get_interact(&objects);
+                let objects = player.location.get_objects();
+                let object = get_obj_user("interact with?", &objects);
 
                 if object.is_none() { continue; }
                 // The case of object being None is handled, so unwrap() is fine.
@@ -150,6 +184,15 @@ fn main() {
                     break;
                 }
             },
+            Cmd::Examine => {
+                let objects = player.location.get_objects();
+                let object = get_obj_user("examine?", &objects);
+
+                if object.is_none() { continue; }
+                let object = object.unwrap();
+                println!("{}:\n", object.get_name());
+                println!("{}", object.get_desc());
+            }
         }
     }
 }
