@@ -282,6 +282,10 @@ impl Location {
         self.objects.clone()
     }
 
+    pub fn rem_object(&mut self, name: &str) {
+        self.objects.remove(name);
+    }
+
     /// Attaches loc to other.
     /// This function sets loc.dir to other, and other.dir.flip() to loc
     pub fn attach(
@@ -389,6 +393,12 @@ impl TryFrom<String> for Command {
             "examine" => Ok(Command::Examine),
             "save" => Ok(Command::Save),
             "quit" | "exit" | "close" => Ok(Command::Quit),
+            "upupdowndownleftrightleftrightbastart" => {
+                sleep!(1000);
+                println!("you seriously found this??");
+                sleep!(1000);
+                panic!("no");
+            },
             _ => Err(()),
         }
     }
@@ -416,7 +426,7 @@ impl Command {
     }
 }
 
-pub fn get_object_user<'a> (prompt_end: &str, objects: &'a HashMap<String, AreaObject>) -> Option<&'a AreaObject> {
+pub fn get_obj_user<'a> (prompt_end: &str, objects: &'a HashMap<String, AreaObject>) -> Option<&'a AreaObject> {
     let object = input!(format!("What do you want to {} ", prompt_end)).fmt();
 
     match objects.get(&object) {
@@ -613,6 +623,11 @@ pub trait Format {
     fn fmt(&self) -> String;
 }
 impl Format for String {
+    fn fmt(&self) -> String {
+        self.trim().to_ascii_lowercase()
+    }
+}
+impl Format for &str {
     fn fmt(&self) -> String {
         self.trim().to_ascii_lowercase()
     }
