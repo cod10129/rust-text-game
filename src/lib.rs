@@ -42,7 +42,7 @@ macro_rules! cmd_desc {
 /// pall! prints all the values in an Iterator.
 macro_rules! pall {
     ($iter: expr) => {
-        for item in $iter {
+      for item in $iter {
             println!("{}", item);
         }
     }
@@ -175,18 +175,12 @@ pub struct Enemy {
     health: u16,
     damage: fn() -> u16,
     xp: u16,
-    can_run: bool,
+    run_chance: f32,
 }
 
 impl Enemy {
-    pub fn new(
-        name: String,
-        health: u16,
-        damage: fn() -> u16,
-        xp: u16,
-        can_run: bool
-    ) -> Self {
-        Enemy { name, health, damage, xp, can_run }
+    pub fn new(name: String, health: u16, damage: fn() -> u16, xp: u16, run_chance: f32) -> Self {
+        Enemy { name, health, damage, xp, run_chance }
     }
 }
 
@@ -521,15 +515,14 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
     // Note: a continue means to ask for another command
     // WITHOUT doing the damage calculation.
     loop {
-        let cmd = BattleCommand::from_user(&("What action do you want to take? ".green()));
+        let cmd = BC::from_user(&("What action do you want to take? ".green()));
         match cmd {
             BC::Run => {
-                if !enemy.can_run {
+                if enemy.run_chance <= 0.0 {
                     println!("You cannot run from this battle.");
                     continue;
                 }
-                const RUN_CHANCE: f32 = 0.80;
-                if fastrand::f32() < RUN_CHANCE {
+                if fastrand::f32() < enemy.run_chance {
                     println!("You successfully ran away from the battle!");
                     return;
                 } else {
@@ -542,7 +535,7 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
                     enemy.health.checked_sub(player.weapon.damage())
                     .unwrap_or(0);
                 println!("{} has {} health remaining.", enemy.name, enemy.health);
-                sleep(Duration::from_millis(500));
+                sleep(Duration::from_millis(1000));
             },
             BC::Health => {
                 println!("Your health is: {}/{}", player.health, player.max_health);
