@@ -8,3 +8,4 @@ edition = "2021"
 
 [dependencies]
 colored = "2.0.0"
+fastrand = "1.9.0"

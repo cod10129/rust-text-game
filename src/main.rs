@@ -6,12 +6,11 @@ use text_game::{
     nmsg, monologue, cutscene,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
-    Location as Loc, AreaObject as AO,
+    Location as Loc, AreaObject as AO, Enemy,
     ObjectHolder,
-    get_interact,
+    get_interact, process_battle, help_menu,
     Cutscene,
     Player,
-    help_menu as display_help,
     Colorize,
     Rc, RefCell, HashMap,
 };
@@ -27,6 +26,20 @@ fn get_test_npc() -> AO {
         monologue!("Test NPC".blue(), messages).play()
     };
     AO::new(&"Test NPC", &"An NPC for testing purposes.", text)
+}
+
+fn get_test_enemy() -> AO {
+    let battle = |p: &mut Player| {
+        process_battle(p, &mut Enemy::new(
+            "Not Goomba".to_string(),
+            5,
+            || {1},
+            1,
+            true
+        ))
+    };
+
+    AO::new("Not Goomba", "An enemy for testing purposes.", battle)
 }
 
 fn get_locations() -> Rc<RefCell<Loc>> {
@@ -50,6 +63,7 @@ fn get_locations() -> Rc<RefCell<Loc>> {
             }
         )
     );
+    spawn.add_object(get_test_enemy());
     Loc::attach(&spawn, &village_road, MC::West);
     Loc::attach(&village_road, &village, MC::West);
     Loc::attach(&spawn, &cave, MC::South);
@@ -104,7 +118,7 @@ fn main() {
             Cmd::Save => {
                 println!("This feature is currently not implemented.")
             }
-            Cmd::Help => display_help(),
+            Cmd::Help => help_menu(),
             Cmd::Objects => {
                 let objects = player.location.borrow().get_objects();
                 if objects.is_empty() {

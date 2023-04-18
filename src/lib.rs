@@ -2,9 +2,7 @@
 mod input;
 
 use std::fmt;
-pub use std::cell::Ref;
 pub use std::cell::RefCell;
-pub use std::ops::Deref;
 pub use std::rc::Rc;
 pub use std::collections::HashMap;
 use std::thread::sleep;
@@ -31,6 +29,23 @@ macro_rules! monologue {
         }
         scene
     }};
+}
+
+/// cmd_desc! takes a name and a description that are format!-able.
+/// The command becomes bright_yellow, and the description cyan.
+macro_rules! cmd_desc {
+    ($name: expr, $desc: expr) => {
+        format!("{}{} {}", $name.bright_yellow(), ":".bright_yellow(), $desc.cyan())
+    }
+}
+
+/// pall! prints all the values in an Iterator.
+macro_rules! pall {
+    ($iter: expr) => {
+        for item in $iter {
+            println!("{}", item);
+        }
+    }
 }
 
 struct CutscenePart {
@@ -64,7 +79,7 @@ impl Cutscene {
 
 #[macro_export]
 /// cutscene! takes some messages (String, u16), and returns
-/// a cutscene containing those messages
+/// a cutscene containing those messages.
 macro_rules! cutscene {
     ( $( $message: expr ),* ) => {{
         let mut scene = Cutscene::new();
@@ -75,11 +90,26 @@ macro_rules! cutscene {
     }}
 }
 
+pub enum Weapon {
+    Wooden,
+    Metal
+}
+
+impl Weapon {
+    pub fn damage(&self) -> u16 {
+        match self {
+            Weapon::Wooden => 1,
+            Weapon::Metal => 2
+        }
+    }
+}
+
 pub struct Player {
     pub location: Rc<RefCell<Location>>,
     pub health: u16,
     pub max_health: u16,
     pub xp: u16,
+    pub weapon: Weapon,
     // Different objects (like doors)
     // can access these flags to determine their state.
     // Say, defeating an enemy can set a certain flag to true,
@@ -94,6 +124,7 @@ impl Player {
             health: 10,
             max_health: 10,
             xp: 0,
+            weapon: Weapon::Wooden,
             // 10 placeholder flags
             // For every object that uses a flag,
             // you need to check if there is space
@@ -136,6 +167,26 @@ impl AreaObject {
 
     pub fn get_name(&self) -> String {
         self.name.clone()
+    }
+}
+
+pub struct Enemy {
+    name: String,
+    health: u16,
+    damage: fn() -> u16,
+    xp: u16,
+    can_run: bool,
+}
+
+impl Enemy {
+    pub fn new(
+        name: String,
+        health: u16,
+        damage: fn() -> u16,
+        xp: u16,
+        can_run: bool
+    ) -> Self {
+        Enemy { name, health, damage, xp, can_run }
     }
 }
 
@@ -278,20 +329,23 @@ pub enum YN {
     No,
 }
 
-impl YN {
-    pub fn from_string(string: String) -> Option<YN> {
-        match string.as_str() {
-            "y" | "yes" => Some(Yes),
-            "n" | "no" => Some(No),
-            _ => None,
+impl TryFrom<String> for YN {
+    type Error = ();
+    fn try_from(val: String) -> Result<Self, Self::Error> {
+        match val.as_str() {
+            "y" | "yes" => Ok(Yes),
+            "n" | "no" => Ok(No),
+            _ => Err(()),
         }
     }
+}
 
+impl YN {
     pub fn from_user(prompt: &str) -> YN {
         let string = input!(prompt).fmt();
-        match YN::from_string(string) {
-            Some(v) => v,
-            None => {
+        match string.try_into() {
+            Ok(v) => v,
+            Err(_) => {
                 println!("Please enter Y or N.");
                 Self::from_user(prompt)
             }
@@ -313,32 +367,30 @@ pub enum Command {
     Quit,
 }
 
-impl Command {
-    pub fn from_str(string: String) -> Option<Command> {
-        match string.as_str() {
-            "north" | "n" => Some(Command::North),
-            "south" | "s" => Some(Command::South),
-            "east" | "e" => Some(Command::East),
-            "west" | "w" => Some(Command::West),
-            "help" => Some(Command::Help),
-            "location" | "l" | "loc" => Some(Command::Location),
-            "objects" | "o" => Some(Command::Objects),
-            "interact" | "i" => Some(Command::Interact),
-            "save" => Some(Command::Save),
-            "quit" | "exit" | "close" => Some(Command::Quit),
-            _ => None,
+impl TryFrom<String> for Command {
+    type Error = ();
+    fn try_from(val: String) -> Result<Self, Self::Error> {
+        match val.as_str() {
+            "north" | "n" => Ok(Command::North),
+            "south" | "s" => Ok(Command::South),
+            "east" | "e" => Ok(Command::East),
+            "west" | "w" => Ok(Command::West),
+            "help" => Ok(Command::Help),
+            "location" | "l" | "loc" => Ok(Command::Location),
+            "objects" | "o" => Ok(Command::Objects),
+            "interact" | "i" => Ok(Command::Interact),
+            "save" => Ok(Command::Save),
+            "quit" | "exit" | "close" => Ok(Command::Quit),
+            _ => Err(()),
         }
     }
+}
 
+impl Command {
     pub fn get_buffer(buffer: &mut Command) -> Result<(), ()> {
         let string = input!().fmt();
-        match Command::from_str(string) {
-            Some(v) => {
-                *buffer = v;
-                Ok(())
-            }
-            None => Err(()),
-        }
+        *buffer = string.try_into()?;
+        Ok(())
     }
 
     pub fn get() -> Command {
@@ -374,22 +426,20 @@ pub fn help_menu() {
     let lines = [
         "--------------- HELP MENU ---------------".cyan().to_string(),
         "".to_string(),
-        "Commands:".cyan().to_string(),
+        "Commands:".bright_yellow().to_string(),
         "".to_string(),
-        "help: displays this menu".cyan().to_string(),
-        "north: moves the player north".cyan().to_string(),
-        "south: moves the player south".cyan().to_string(),
-        "east: moves the player east".cyan().to_string(),
-        "west: moves the player west".cyan().to_string(),
-        "location: displays your current location".cyan().to_string(),
-        "objects: displays all objects in your current location".cyan().to_string(),
-        "interact: interacts with an object in your current location".cyan().to_string(),
-        format!("{} {}", "save: saves the game".cyan(), "(UNIMPLEMENTED)".red()),
-        "quit: quits the game".cyan().to_string(),
+        cmd_desc!("help", "displays this menu"),
+        cmd_desc!("north", "moves the player north"),
+        cmd_desc!("south", "moves the player south"),
+        cmd_desc!("east", "moves the player east"),
+        cmd_desc!("west", "moves the player west"),
+        cmd_desc!("location", "displays your current location"),
+        cmd_desc!("objects", "displays all objects in your current location"),
+        cmd_desc!("interact", "interacts with an object in your current location"),
+        cmd_desc!("save", format!("{} {}", "saves the game".cyan(), "(UNIMPLEMENTED)".red())),
+        cmd_desc!("quit", "quits the game"),
     ];
-    for line in lines {
-        println!("{line}");
-    }
+    pall![lines];
 }
 
 #[derive(Debug, Clone)]
@@ -426,6 +476,111 @@ impl MovementCommand {
 
     pub fn flip_in_place(&mut self) {
         *self = self.flip();
+    }
+}
+
+pub enum BattleCommand {
+    Attack,
+    Run,
+    Health,
+    Options,
+}
+
+impl TryFrom<String> for BattleCommand {
+    type Error = ();
+    fn try_from(val: String) -> Result<Self, Self::Error> {
+        use BattleCommand as BC;
+        match val.as_str() {
+            "attack" => Ok(BC::Attack),
+            "run" => Ok(BC::Run),
+            "health" => Ok(BC::Health),
+            "options" | "help" => Ok(BC::Options),
+            _ => Err(())
+        }
+    }
+}
+
+impl BattleCommand {
+    pub fn from_user(prompt: &str) -> BattleCommand {
+        let string = input!(prompt).fmt();
+        match string.try_into() {
+            Ok(v) => v,
+            Err(_) => {
+                println!("Please enter a valid command.");
+                println!("Use {} to see commands.", "options".bright_yellow());
+                println!();
+                BattleCommand::from_user(prompt)
+            }
+        }
+    }
+}
+
+pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
+    use BattleCommand as BC;
+    println!("You entered battle with {}.", enemy.name);
+    // Note: a continue means to ask for another command
+    // WITHOUT doing the damage calculation.
+    loop {
+        let cmd = BattleCommand::from_user(&("What action do you want to take? ".green()));
+        match cmd {
+            BC::Run => {
+                if !enemy.can_run {
+                    println!("You cannot run from this battle.");
+                    continue;
+                }
+                const RUN_CHANCE: f32 = 0.80;
+                if fastrand::f32() < RUN_CHANCE {
+                    println!("You successfully ran away from the battle!");
+                    return;
+                } else {
+                    println!("You failed to run away from the battle!");
+                }
+            },
+            BC::Attack => {
+                println!("You dealt {} damage!", player.weapon.damage());
+                enemy.health =
+                    enemy.health.checked_sub(player.weapon.damage())
+                    .unwrap_or(0);
+                println!("The enemy has {} health remaining.", enemy.health);
+                sleep(Duration::from_millis(500));
+            },
+            BC::Health => {
+                println!("Your health is: {}/{}", player.health, player.max_health);
+                continue;
+            },
+            BC::Options => {
+                let lines = [
+                    "You can:".green().to_string(),
+                    cmd_desc!("attack", "attack the enemy"),
+                    cmd_desc!("run", "run away from the battle"),
+                    cmd_desc!("health", "check your current health"),
+                    cmd_desc!("options", "display this menu"),
+                ];
+                pall![lines];
+                continue;
+            }
+        }
+        // check enemy health
+        if enemy.health <= 0 {
+            println!("You defeated the {}!", enemy.name);
+            println!("You gained {} xp!", enemy.xp);
+            player.xp = player.xp.checked_add(enemy.xp)
+                .unwrap_or(u16::MAX);
+            println!("You now have {} xp!", player.xp);
+        }
+        // do enemy attack
+        let attack: u16 = (enemy.damage)();
+        println!("The {} dealt {} damage!", enemy.name, attack);
+        player.health = player.health.checked_sub(attack).unwrap_or(0);
+        println!("You have {}/{} health remaining.", player.health, player.max_health);
+        // check player health
+        if player.health <= 0 {
+            // TODO: make the dots appear one by one
+            println!("You died...");
+            let death = "GAME OVER".red();
+            println!("{death}");
+            return;
+        }
     }
 }
 
