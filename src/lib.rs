@@ -541,7 +541,7 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
                 enemy.health =
                     enemy.health.checked_sub(player.weapon.damage())
                     .unwrap_or(0);
-                println!("The enemy has {} health remaining.", enemy.health);
+                println!("{} has {} health remaining.", enemy.name, enemy.health);
                 sleep(Duration::from_millis(500));
             },
             BC::Health => {
@@ -562,15 +562,16 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
         }
         // check enemy health
         if enemy.health <= 0 {
-            println!("You defeated the {}!", enemy.name);
+            println!("You defeated {}!", enemy.name);
             println!("You gained {} xp!", enemy.xp);
             player.xp = player.xp.checked_add(enemy.xp)
                 .unwrap_or(u16::MAX);
             println!("You now have {} xp!", player.xp);
+            return;
         }
         // do enemy attack
         let attack: u16 = (enemy.damage)();
-        println!("The {} dealt {} damage!", enemy.name, attack);
+        println!("{} dealt {} damage!", enemy.name, attack);
         player.health = player.health.checked_sub(attack).unwrap_or(0);
         println!("You have {}/{} health remaining.", player.health, player.max_health);
         // check player health
