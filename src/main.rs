@@ -3,7 +3,7 @@
 
 #[allow(unused_imports)]
 use text_game::{
-    fout, nmsg, monologue, cutscene, sleep,
+    nmsg, monologue, cutscene, sleep,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO, Enemy,
@@ -35,8 +35,10 @@ fn get_test_enemy() -> AO {
             5,
             || {
                 const EXTRA_DMG_CHANCE: f32 = 0.20;
-                if fastrand::f32() < EXTRA_DMG_CHANCE { 2 } 
-                else { 1 }
+                if fastrand::f32() < EXTRA_DMG_CHANCE { 
+                    println!("Not Goomba did a strong attack!");
+                    2 
+                } else { 1 }
             },
             1,
             0.80
