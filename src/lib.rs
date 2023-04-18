@@ -180,13 +180,14 @@ impl AreaObject {
 pub struct Enemy {
     name: String,
     health: u16,
-    damage: fn() -> u16,
+    // damage() takes self.health and returns a damage value
+    damage: fn(u16) -> u16,
     xp: u16,
     run_chance: f32,
 }
 
 impl Enemy {
-    pub fn new(name: String, health: u16, damage: fn() -> u16, xp: u16, run_chance: f32) -> Self {
+    pub fn new(name: String, health: u16, damage: fn(u16) -> u16, xp: u16, run_chance: f32) -> Self {
         Enemy { name, health, damage, xp, run_chance }
     }
 }
@@ -453,10 +454,10 @@ macro_rules! pfs {
 }
 
 pub fn death_msg() {
-    pfs!("You died", 250);
-    pfs!(".", 300);
-    pfs!(".", 400);
+    pfs!("You died", 400);
+    pfs!(".", 450);
     pfs!(".", 500);
+    pfs!(".", 600);
     println!("\n{}", "GAME OVER".red());
 }
 
@@ -576,7 +577,7 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
             },
             BC::Nothing => {
                 println!("You chose to do nothing.");
-                sleep!(500);
+                sleep!(300);
             }
         }
         // check enemy health
@@ -589,10 +590,11 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
             return;
         }
         // do enemy attack
-        let attack: u16 = (enemy.damage)();
+        let attack: u16 = (enemy.damage)(enemy.health);
         println!("{} dealt {} damage!", enemy.name, attack);
         player.health = player.health.checked_sub(attack).unwrap_or(0);
         println!("You have {}/{} health remaining.", player.health, player.max_health);
+        sleep!(500);
         // check player health
         if player.health <= 0 {
             return;

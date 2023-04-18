@@ -33,7 +33,7 @@ fn get_test_enemy() -> AO {
         process_battle(p, &mut Enemy::new(
             "Not Goomba".to_string(),
             5,
-            || {
+            |_: u16| {
                 const EXTRA_DMG_CHANCE: f32 = 0.20;
                 if fastrand::f32() < EXTRA_DMG_CHANCE { 
                     println!("Not Goomba did a strong attack!");
