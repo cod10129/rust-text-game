@@ -7,7 +7,7 @@ use text_game::{
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO, Enemy,
-    ObjectHolder, Format,
+    ObjectHolder, Format, Directional,
     process_battle, help_menu, death_msg, get_obj_user,
     Cutscene,
     Player,
@@ -74,8 +74,20 @@ fn boss() -> AO {
 }
 
 fn treasure_door() -> AO {
-    let open = |_p: &mut Player| {
-        
+    let open = |p: &mut Player| {
+        if p.flags.contains_key("treasure1") {
+            cutscene![
+                ("The door slowly opens.", 1000)
+            ].play();
+            p.location.borrow_mut().rem_object(&"North Door".fmt());
+            Loc::attach(&p.location, &Loc::new("Treasure Room", HashMap::new()), MC::North);
+            let cave = p.location.w().unwrap().n().unwrap();
+            Loc::attach(&p.location.n().unwrap(), &cave, MC::West);
+        } else {
+            cutscene![
+                ("You do not have the key to this door.", 1000)
+            ].play();
+        }
     };
 
     AO::new("North Door", "A locked door that leads north.", open)
@@ -87,7 +99,7 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     let depths = Loc::new("Depths", empty_map.clone());
     let boss_room = Loc::new("Boss Room", empty_map.clone());
     boss_room.add_object(boss());
-    let treasure = Loc::new("Treasure Room", empty_map.clone());
+    boss_room.add_object(treasure_door());
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
     village.add_object(get_test_npc());
@@ -109,8 +121,6 @@ fn get_locations() -> Rc<RefCell<Loc>> {
     Loc::attach(&spawn, &cave, MC::South);
     Loc::attach(&cave, &depths, MC::South);
     Loc::attach(&depths, &boss_room, MC::East);
-    Loc::attach(&boss_room, &treasure, MC::North);
-    Loc::attach_oneway(&treasure, &cave, MC::West);
 
     spawn
 }

@@ -230,21 +230,15 @@ impl Location {
         }))
     }
 
-    pub fn set_n(&mut self, other: &Rc<RefCell<Location>>) {
-        self.n = Some(Rc::clone(other));
-    }
+    pub fn set_n(&mut self, other: &Rc<RefCell<Location>>) { self.n = Some(Rc::clone(other)); }
+    pub fn set_s(&mut self, other: &Rc<RefCell<Location>>) { self.s = Some(Rc::clone(other)); }
+    pub fn set_w(&mut self, other: &Rc<RefCell<Location>>) { self.w = Some(Rc::clone(other)); }
+    pub fn set_e(&mut self, other: &Rc<RefCell<Location>>) { self.e = Some(Rc::clone(other)); }
 
-    pub fn set_s(&mut self, other: &Rc<RefCell<Location>>) {
-        self.s = Some(Rc::clone(other));
-    }
-
-    pub fn set_w(&mut self, other: &Rc<RefCell<Location>>) {
-        self.w = Some(Rc::clone(other));
-    }
-
-    pub fn set_e(&mut self, other: &Rc<RefCell<Location>>) {
-        self.e = Some(Rc::clone(other));
-    }
+    pub fn get_n(&self) -> Option<Rc<RefCell<Location>>> { self.n.clone() }
+    pub fn get_s(&self) -> Option<Rc<RefCell<Location>>> { self.s.clone() }
+    pub fn get_w(&self) -> Option<Rc<RefCell<Location>>> { self.w.clone() }
+    pub fn get_e(&self) -> Option<Rc<RefCell<Location>>> { self.e.clone() }
 
     pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
         use MovementCommand::*;
@@ -330,6 +324,20 @@ impl ObjectHolder for Rc<RefCell<Location>> {
     fn get_objects(&self) -> HashMap<String, AreaObject> {
         self.borrow().get_objects()
     }
+}
+
+pub trait Directional {
+    fn n(&self) -> Option<Rc<RefCell<Location>>>;
+    fn s(&self) -> Option<Rc<RefCell<Location>>>;
+    fn w(&self) -> Option<Rc<RefCell<Location>>>;
+    fn e(&self) -> Option<Rc<RefCell<Location>>>;
+}
+
+impl Directional for Rc<RefCell<Location>> {
+    fn n(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_n() }
+    fn s(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_s() }
+    fn w(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_w() }
+    fn e(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_e() }
 }
 
 pub use YN::*;
@@ -461,7 +469,7 @@ pub fn help_menu() {
     pall![lines];
 }
 
-/// p(rint) f(lush stdout) s(leep)
+/// print, flush, sleep
 macro_rules! pfs {
     ($msg: literal, $wait: literal) => {
         print!($msg);
