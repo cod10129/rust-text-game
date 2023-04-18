@@ -573,6 +573,10 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
                 ];
                 pall![lines];
                 continue;
+            },
+            BC::Nothing => {
+                println!("You chose to do nothing.");
+                sleep!(500);
             }
         }
         // check enemy health
