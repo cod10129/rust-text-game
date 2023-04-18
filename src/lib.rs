@@ -5,12 +5,17 @@ use std::fmt;
 pub use std::cell::RefCell;
 pub use std::rc::Rc;
 pub use std::collections::HashMap;
-use std::thread::sleep;
 use std::time::Duration;
 
 pub use colored::Colorize;
 
-// TODO: macro_rules! sleep
+#[macro_export]
+/// sleep! takes an amount of milliseconds, and pauses the thread for that long.
+macro_rules! sleep {
+    ($ms: literal) => {
+        std::thread::sleep(std::time::Duration::from_millis($ms));
+    }
+}
 
 #[macro_export]
 /// Formats to {name}: {msg}
@@ -74,7 +79,7 @@ impl Cutscene {
     pub fn play(&self) {
         for part in &self.data {
             println!("{}", part.msg);
-            sleep(part.wait);
+            std::thread::sleep(part.wait);
         }
     }
 }
@@ -438,6 +443,23 @@ pub fn help_menu() {
     pall![lines];
 }
 
+/// p(rint) f(lush stdout) s(leep)
+macro_rules! pfs {
+    ($msg: literal, $wait: literal) => {
+        print!($msg);
+        fout!();
+        sleep!($wait);
+    }
+}
+
+pub fn death_msg() {
+    pfs!("You died", 250);
+    pfs!(".", 300);
+    pfs!(".", 400);
+    pfs!(".", 500);
+    println!("\n{}", "GAME OVER".red());
+}
+
 #[derive(Debug, Clone)]
 pub enum MovementCommand {
     North,
@@ -469,15 +491,12 @@ impl MovementCommand {
             Self::West => Self::East,
         }
     }
-
-    pub fn flip_in_place(&mut self) {
-        *self = self.flip();
-    }
 }
 
 pub enum BattleCommand {
     Attack,
     Run,
+    Nothing,
     Health,
     Options,
 }
@@ -487,8 +506,9 @@ impl TryFrom<String> for BattleCommand {
     fn try_from(val: String) -> Result<Self, Self::Error> {
         use BattleCommand as BC;
         match val.as_str() {
-            "attack" => Ok(BC::Attack),
+            "attack" | "a" => Ok(BC::Attack),
             "run" => Ok(BC::Run),
+            "nothing" | "skip" => Ok(BC::Nothing),
             "health" => Ok(BC::Health),
             "options" | "help" => Ok(BC::Options),
             _ => Err(())
@@ -537,7 +557,7 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
                     enemy.health.checked_sub(player.weapon.damage())
                     .unwrap_or(0);
                 println!("{} has {} health remaining.", enemy.name, enemy.health);
-                sleep(Duration::from_millis(1000));
+                sleep!(750);
             },
             BC::Health => {
                 println!("Your health is: {}/{}", player.health, player.max_health);

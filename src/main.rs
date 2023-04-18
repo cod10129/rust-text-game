@@ -3,12 +3,12 @@
 
 #[allow(unused_imports)]
 use text_game::{
-    nmsg, monologue, cutscene,
+    fout, nmsg, monologue, cutscene, sleep,
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO, Enemy,
     ObjectHolder,
-    get_interact, process_battle, help_menu,
+    get_interact, process_battle, help_menu, death_msg,
     Cutscene,
     Player,
     Colorize,
@@ -144,19 +144,8 @@ fn main() {
                 // The case of object being None is handled, so unwrap() is fine.
                 object.unwrap().interact(&mut player);
                 if player.health == 0 {
-                    use std::thread::sleep;
-                    use std::time::Duration;
-                    // TODO: make the dots appear one by one
-                    print!("You died");
-                    sleep(Duration::from_millis(250));
-                    print!(".");
-                    sleep(Duration::from_millis(300));
-                    print!(".");
-                    sleep(Duration::from_millis(400));
-                    print!(".");
-                    sleep(Duration::from_millis(500));
-                    let death = "GAME OVER".red();
-                    println!("{death}");
+                    death_msg();
+                    break;
                 }
             },
         }

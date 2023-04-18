@@ -2,7 +2,8 @@
 #[macro_export]
 macro_rules! fout {
     () => {
-        use std::io::Write;
+        #[allow(unused_imports)]
+        use std::io::Write as _;
         std::io::stdout()
             .flush()
             .expect("Should be able to flush stdout.")
