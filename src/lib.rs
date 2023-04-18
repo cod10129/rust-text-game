@@ -10,6 +10,8 @@ use std::time::Duration;
 
 pub use colored::Colorize;
 
+// TODO: macro_rules! sleep
+
 #[macro_export]
 /// Formats to {name}: {msg}
 macro_rules! nmsg {
@@ -569,10 +571,6 @@ pub fn process_battle(player: &mut Player, enemy: &mut Enemy) {
         println!("You have {}/{} health remaining.", player.health, player.max_health);
         // check player health
         if player.health <= 0 {
-            // TODO: make the dots appear one by one
-            println!("You died...");
-            let death = "GAME OVER".red();
-            println!("{death}");
             return;
         }
     }
