@@ -510,6 +510,17 @@ impl TryFrom<Command> for MovementCommand {
     }
 }
 
+impl Into<&str> for MovementCommand {
+    fn into(self) -> char {
+        match self {
+            Self::North => 'n',
+            Self::South => 's',
+            Self::East => 'e',
+            Self::West => 'w',
+        }
+    }
+}
+
 impl MovementCommand {
     pub fn flip(&self) -> Self {
         match self {

@@ -80,7 +80,8 @@ fn treasure_door() -> AO {
                 ("The door slowly opens.", 1000)
             ].play();
             p.location.borrow_mut().rem_object(&"North Door".fmt());
-            Loc::attach(&p.location, &Loc::new("Treasure Room", HashMap::new()), MC::North);
+            let treasure = Loc::new("Treasure Room", HashMap::new());
+            Loc::attach(&p.location, &treasure, MC::North);
             let cave = p.location.w().unwrap().n().unwrap();
             Loc::attach(&p.location.n().unwrap(), &cave, MC::West);
         } else {
