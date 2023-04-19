@@ -9,6 +9,8 @@ use std::time::Duration;
 
 pub use colored::Colorize;
 
+pub type RfcLoc = Rc<RefCell<Location>>;
+
 #[macro_export]
 /// sleep! takes an amount of milliseconds, and pauses the thread for that long.
 macro_rules! sleep {
@@ -112,7 +114,7 @@ impl Weapon {
 }
 
 pub struct Player {
-    pub location: Rc<RefCell<Location>>,
+    pub location: RfcLoc,
     pub health: u16,
     pub max_health: u16,
     pub xp: u16,
@@ -125,7 +127,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(location: Rc<RefCell<Location>>) -> Self {
+    pub fn new(location: RfcLoc) -> Self {
         Self {
             location,
             health: 10,
@@ -198,10 +200,10 @@ impl Enemy {
 
 #[derive(Clone)]
 pub struct Location {
-    n: Option<Rc<RefCell<Location>>>,
-    s: Option<Rc<RefCell<Location>>>,
-    w: Option<Rc<RefCell<Location>>>,
-    e: Option<Rc<RefCell<Location>>>,
+    n: Option<RfcLoc>,
+    s: Option<RfcLoc>,
+    w: Option<RfcLoc>,
+    e: Option<RfcLoc>,
     name: String,
     objects: HashMap<String, AreaObject>,
 }
@@ -219,7 +221,7 @@ impl fmt::Debug for Location {
 }
 
 impl Location {
-    pub fn new(name: &str, objects: HashMap<String, AreaObject>) -> Rc<RefCell<Self>> {
+    pub fn new(name: &str, objects: HashMap<String, AreaObject>) -> RfcLoc {
         Rc::new(RefCell::new(Self {
             n: None,
             s: None,
@@ -230,15 +232,15 @@ impl Location {
         }))
     }
 
-    pub fn set_n(&mut self, other: &Rc<RefCell<Location>>) { self.n = Some(Rc::clone(other)); }
-    pub fn set_s(&mut self, other: &Rc<RefCell<Location>>) { self.s = Some(Rc::clone(other)); }
-    pub fn set_w(&mut self, other: &Rc<RefCell<Location>>) { self.w = Some(Rc::clone(other)); }
-    pub fn set_e(&mut self, other: &Rc<RefCell<Location>>) { self.e = Some(Rc::clone(other)); }
+    pub fn set_n(&mut self, other: &RfcLoc) { self.n = Some(Rc::clone(other)); }
+    pub fn set_s(&mut self, other: &RfcLoc) { self.s = Some(Rc::clone(other)); }
+    pub fn set_w(&mut self, other: &RfcLoc) { self.w = Some(Rc::clone(other)); }
+    pub fn set_e(&mut self, other: &RfcLoc) { self.e = Some(Rc::clone(other)); }
 
-    pub fn get_n(&self) -> Option<Rc<RefCell<Location>>> { self.n.clone() }
-    pub fn get_s(&self) -> Option<Rc<RefCell<Location>>> { self.s.clone() }
-    pub fn get_w(&self) -> Option<Rc<RefCell<Location>>> { self.w.clone() }
-    pub fn get_e(&self) -> Option<Rc<RefCell<Location>>> { self.e.clone() }
+    pub fn get_n(&self) -> Option<RfcLoc> { self.n.clone() }
+    pub fn get_s(&self) -> Option<RfcLoc> { self.s.clone() }
+    pub fn get_w(&self) -> Option<RfcLoc> { self.w.clone() }
+    pub fn get_e(&self) -> Option<RfcLoc> { self.e.clone() }
 
     pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
         use MovementCommand::*;
@@ -250,9 +252,9 @@ impl Location {
         };
         if new.is_some() {
             // What happens here:
-            // new is &Option<Rc<RefCell<Location>>>
-            // Option.as_ref() returns Option<&Rc<RefCell<Location>>>
-            // the value INSIDE the option (&Rc<RefCell<Location>>)
+            // new is &Option<RfcLoc>
+            // Option.as_ref() returns Option<&RfcLoc>
+            // the value INSIDE the option (&RfcLoc)
             // is cloned and extracted from to return an Option<Location>
             new.as_ref().map(|x| (**x).clone().into_inner())
         } else {
@@ -260,7 +262,7 @@ impl Location {
         }
     }
 
-    pub fn travel(locmap: &Rc<RefCell<Location>>, direction: &MovementCommand) -> Option<Location> {
+    pub fn travel(locmap: &RfcLoc, direction: &MovementCommand) -> Option<Location> {
         locmap.borrow().traverse(direction)
     }
 
@@ -283,8 +285,8 @@ impl Location {
     /// Attaches loc to other.
     /// This function sets loc.dir to other, and other.dir.flip() to loc
     pub fn attach(
-        loc: &Rc<RefCell<Location>>,
-        other: &Rc<RefCell<Location>>,
+        loc: &RfcLoc,
+        other: &RfcLoc,
         dir: MovementCommand,
     ) {
         Location::attach_oneway(loc, other, dir.clone());
@@ -292,8 +294,8 @@ impl Location {
     }
 
     pub fn attach_oneway(
-        loc: &Rc<RefCell<Location>>,
-        other: &Rc<RefCell<Location>>,
+        loc: &RfcLoc,
+        other: &RfcLoc,
         dir: MovementCommand,
     ) {
         let mut l = loc.borrow_mut();
@@ -312,7 +314,7 @@ pub trait ObjectHolder {
     fn get_objects(&self) -> HashMap<String, AreaObject>;
 }
 
-impl ObjectHolder for Rc<RefCell<Location>> {
+impl ObjectHolder for RfcLoc {
     fn add_object(&self, obj: AreaObject) {
         self.borrow_mut().add_object(obj);
     }
@@ -327,17 +329,17 @@ impl ObjectHolder for Rc<RefCell<Location>> {
 }
 
 pub trait Directional {
-    fn n(&self) -> Option<Rc<RefCell<Location>>>;
-    fn s(&self) -> Option<Rc<RefCell<Location>>>;
-    fn w(&self) -> Option<Rc<RefCell<Location>>>;
-    fn e(&self) -> Option<Rc<RefCell<Location>>>;
+    fn n(&self) -> Option<RfcLoc>;
+    fn s(&self) -> Option<RfcLoc>;
+    fn w(&self) -> Option<RfcLoc>;
+    fn e(&self) -> Option<RfcLoc>;
 }
 
-impl Directional for Rc<RefCell<Location>> {
-    fn n(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_n() }
-    fn s(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_s() }
-    fn w(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_w() }
-    fn e(&self) -> Option<Rc<RefCell<Location>>> { self.borrow().get_e() }
+impl Directional for RfcLoc {
+    fn n(&self) -> Option<RfcLoc> { self.borrow().get_n() }
+    fn s(&self) -> Option<RfcLoc> { self.borrow().get_s() }
+    fn w(&self) -> Option<RfcLoc> { self.borrow().get_w() }
+    fn e(&self) -> Option<RfcLoc> { self.borrow().get_e() }
 }
 
 pub use YN::*;

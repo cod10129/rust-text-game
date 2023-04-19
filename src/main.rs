@@ -12,7 +12,7 @@ use text_game::{
     Cutscene,
     Player,
     Colorize,
-    Rc, RefCell, HashMap,
+    Rc, RefCell, HashMap, RfcLoc
 };
 
 fn get_test_npc() -> AO {
@@ -93,7 +93,7 @@ fn treasure_door() -> AO {
     AO::new("North Door", "A locked door that leads north.", open)
 }
 
-fn get_locations() -> Rc<RefCell<Loc>> {
+fn get_locations() -> RfcLoc {
     let empty_map = HashMap::new();
     let cave = Loc::new("Cave", empty_map.clone());
     let depths = Loc::new("Depths", empty_map.clone());
