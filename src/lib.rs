@@ -199,11 +199,29 @@ impl Enemy {
 }
 
 #[derive(Clone)]
+pub struct LocDir {
+    pub loc: Option<RfcLoc>,
+    can_move: fn(&Player) -> bool,
+}
+
+impl LocDir {
+    pub fn new(loc: Option<RfcLoc>, can_move: Option<fn(&Player) -> bool>) -> Self {
+        let can_move = if can_move.is_none() {
+            |_| {true}
+        } else { can_move };
+        LocDir {
+            loc,
+            can_move,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Location {
-    n: Option<RfcLoc>,
-    s: Option<RfcLoc>,
-    w: Option<RfcLoc>,
-    e: Option<RfcLoc>,
+    n: LocDir,
+    s: LocDir,
+    w: LocDir,
+    e: LocDir,
     name: String,
     objects: HashMap<String, AreaObject>,
 }
@@ -223,24 +241,32 @@ impl fmt::Debug for Location {
 impl Location {
     pub fn new(name: &str, objects: HashMap<String, AreaObject>) -> RfcLoc {
         Rc::new(RefCell::new(Self {
-            n: None,
-            s: None,
-            w: None,
-            e: None,
+            n: LocDir::new(None, None),
+            s: LocDir::new(None, None),
+            w: LocDir::new(None, None),
+            e: LocDir::new(None, None),
             name: name.to_string(),
             objects,
         }))
     }
 
-    pub fn set_n(&mut self, other: &RfcLoc) { self.n = Some(Rc::clone(other)); }
-    pub fn set_s(&mut self, other: &RfcLoc) { self.s = Some(Rc::clone(other)); }
-    pub fn set_w(&mut self, other: &RfcLoc) { self.w = Some(Rc::clone(other)); }
-    pub fn set_e(&mut self, other: &RfcLoc) { self.e = Some(Rc::clone(other)); }
+    pub fn set_n(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+        self.n = LocDir::new(Some(Rc::clone(other)), can_move);
+    }
+    pub fn set_s(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+        self.s = LocDir::new(Some(Rc::clone(other)), can_move);
+    }
+    pub fn set_w(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+        self.w = LocDir::new(Some(Rc::clone(other)), can_move);
+    }
+    pub fn set_e(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+        self.e = LocDir::new(Some(Rc::clone(other)), can_move);
+    }
 
-    pub fn get_n(&self) -> Option<RfcLoc> { self.n.clone() }
-    pub fn get_s(&self) -> Option<RfcLoc> { self.s.clone() }
-    pub fn get_w(&self) -> Option<RfcLoc> { self.w.clone() }
-    pub fn get_e(&self) -> Option<RfcLoc> { self.e.clone() }
+    pub fn get_n(&self) -> Option<RfcLoc> { self.n.clone().loc }
+    pub fn get_s(&self) -> Option<RfcLoc> { self.s.clone().loc }
+    pub fn get_w(&self) -> Option<RfcLoc> { self.w.clone().loc }
+    pub fn get_e(&self) -> Option<RfcLoc> { self.e.clone().loc }
 
     pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
         use MovementCommand::*;
@@ -506,17 +532,6 @@ impl TryFrom<Command> for MovementCommand {
             Cmd::East => Ok(Self::East),
             Cmd::West => Ok(Self::West),
             _ => Err(()),
-        }
-    }
-}
-
-impl Into<&str> for MovementCommand {
-    fn into(self) -> char {
-        match self {
-            Self::North => 'n',
-            Self::South => 's',
-            Self::East => 'e',
-            Self::West => 'w',
         }
     }
 }
