@@ -10,6 +10,7 @@ use std::time::Duration;
 pub use colored::Colorize;
 
 pub type RfcLoc = Rc<RefCell<Location>>;
+pub type CanMove = fn(&Player) -> bool;
 
 #[macro_export]
 /// sleep! takes an amount of milliseconds, and pauses the thread for that long.
@@ -201,14 +202,16 @@ impl Enemy {
 #[derive(Clone)]
 pub struct LocDir {
     pub loc: Option<RfcLoc>,
-    can_move: fn(&Player) -> bool,
+    can_move: CanMove,
 }
 
 impl LocDir {
-    pub fn new(loc: Option<RfcLoc>, can_move: Option<fn(&Player) -> bool>) -> Self {
-        let can_move = if can_move.is_none() {
-            |_| {true}
-        } else { can_move };
+    pub fn new(loc: Option<RfcLoc>, can_move: Option<CanMove>) -> Self {
+        let can_move = if let Some(c_move) = can_move {
+            c_move
+        } else {
+            |_: &Player| {true}
+        };
         LocDir {
             loc,
             can_move,
@@ -250,16 +253,16 @@ impl Location {
         }))
     }
 
-    pub fn set_n(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+    pub fn set_n(&mut self, other: &RfcLoc, can_move: Option<CanMove>) {
         self.n = LocDir::new(Some(Rc::clone(other)), can_move);
     }
-    pub fn set_s(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+    pub fn set_s(&mut self, other: &RfcLoc, can_move: Option<CanMove>) {
         self.s = LocDir::new(Some(Rc::clone(other)), can_move);
     }
-    pub fn set_w(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+    pub fn set_w(&mut self, other: &RfcLoc, can_move: Option<CanMove>) {
         self.w = LocDir::new(Some(Rc::clone(other)), can_move);
     }
-    pub fn set_e(&mut self, other: &RfcLoc, can_move: Option<fn(&Player) -> bool>) {
+    pub fn set_e(&mut self, other: &RfcLoc, can_move: Option<CanMove>) {
         self.e = LocDir::new(Some(Rc::clone(other)), can_move);
     }
 
@@ -271,10 +274,10 @@ impl Location {
     pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
         use MovementCommand::*;
         let new = match cmd {
-            North => &self.n,
-            South => &self.s,
-            East => &self.e,
-            West => &self.w,
+            North => &self.n.loc,
+            South => &self.s.loc,
+            East => &self.e.loc,
+            West => &self.w.loc,
         };
         if new.is_some() {
             // What happens here:
@@ -288,7 +291,8 @@ impl Location {
         }
     }
 
-    pub fn travel(locmap: &RfcLoc, direction: &MovementCommand) -> Option<Location> {
+    pub fn travel(locmap: &RfcLoc, direction: &MovementCommand, player: &Player) -> Option<Location> {
+        if locmap.borrow().
         locmap.borrow().traverse(direction)
     }
 
@@ -314,22 +318,26 @@ impl Location {
         loc: &RfcLoc,
         other: &RfcLoc,
         dir: MovementCommand,
+        first_second: Option<CanMove>,
+        second_first: Option<CanMove>,
     ) {
-        Location::attach_oneway(loc, other, dir.clone());
-        Location::attach_oneway(other, loc, dir.flip());
+        Location::attach_oneway(loc, other, dir.clone(), first_second);
+        Location::attach_oneway(other, loc, dir.flip(), second_first);
     }
 
     pub fn attach_oneway(
         loc: &RfcLoc,
         other: &RfcLoc,
         dir: MovementCommand,
+        travel: Option<CanMove>,
     ) {
+        use MovementCommand as MC;
         let mut l = loc.borrow_mut();
         match dir {
-            MovementCommand::North => l.set_n(other),
-            MovementCommand::South => l.set_s(other),
-            MovementCommand::East => l.set_e(other),
-            MovementCommand::West => l.set_w(other),
+            MC::North => l.set_n(other, travel),
+            MC::South => l.set_s(other, travel),
+            MC::East => l.set_e(other, travel),
+            MC::West => l.set_w(other, travel),
         }
     }
 }

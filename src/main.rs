@@ -7,12 +7,10 @@ use text_game::{
     Command as Cmd, MovementCommand as MC,
     YN::{self, Yes, No},
     Location as Loc, AreaObject as AO, Enemy,
-    ObjectHolder, Format, Directional,
+    ObjectHolder, Format, Directional, Colorize,
     process_battle, help_menu, death_msg, get_obj_user,
-    Cutscene,
-    Player,
-    Colorize,
-    Rc, RefCell, HashMap, RfcLoc
+    Cutscene, Player,
+    Rc, RefCell, HashMap, RfcLoc, CanMove
 };
 
 fn get_test_npc() -> AO {
@@ -20,7 +18,10 @@ fn get_test_npc() -> AO {
         let messages: Vec<(String, u16)> = vec![
             ("Hello!".into(), 750),
             ("Did you know that you can use shortened forms of commands?".into(), 1500),
-            (format!("For example, you can type {} instead of {}.", "n".bright_yellow(), "north".bright_yellow()), 1500),
+            (format!("For example, you can type {} instead of {}.", 
+                "n".bright_yellow(), 
+                "north".bright_yellow()), 
+                1500),
             (format!("You can even type {} to interact with things!", "i".bright_yellow()), 1500),
         ];
         monologue!("Test NPC".blue(), messages).play()
@@ -80,10 +81,12 @@ fn treasure_door() -> AO {
                 ("The door slowly opens.", 1000)
             ].play();
             p.location.borrow_mut().rem_object(&"North Door".fmt());
+            /*
             let treasure = Loc::new("Treasure Room", HashMap::new());
             Loc::attach(&p.location, &treasure, MC::North);
             let cave = p.location.w().unwrap().n().unwrap();
             Loc::attach(&p.location.n().unwrap(), &cave, MC::West);
+            */
         } else {
             cutscene![
                 ("You do not have the key to this door.", 1000)
@@ -101,6 +104,10 @@ fn get_locations() -> RfcLoc {
     let boss_room = Loc::new("Boss Room", empty_map.clone());
     boss_room.add_object(boss());
     boss_room.add_object(treasure_door());
+    let treasure = Loc::new("Treasure Room", empty_map.clone());
+    let enter_treasure: Option<CanMove> = Some(|p| {
+        todo!()
+    });
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
     village.add_object(get_test_npc());
@@ -117,11 +124,13 @@ fn get_locations() -> RfcLoc {
         )
     );
     spawn.add_object(get_test_enemy());
-    Loc::attach(&spawn, &village_road, MC::West);
-    Loc::attach(&village_road, &village, MC::West);
-    Loc::attach(&spawn, &cave, MC::South);
-    Loc::attach(&cave, &depths, MC::South);
-    Loc::attach(&depths, &boss_room, MC::East);
+    Loc::attach(&spawn, &village_road, MC::West, None, None);
+    Loc::attach(&village_road, &village, MC::West, None, None);
+    Loc::attach(&spawn, &cave, MC::South, None, None);
+    Loc::attach(&cave, &depths, MC::South, None, None);
+    Loc::attach(&depths, &boss_room, MC::East, None, None);
+    Loc::attach(&boss_room, &treasure, MC::North, enter_treasure, None);
+    Loc::attach(&treasure, &cave, MC::West, None, enter_treasure);
 
     spawn
 }
@@ -160,7 +169,6 @@ fn main() {
                     continue;
                 }
                 player.location = Rc::new(RefCell::new(new.unwrap()));
-
             }
             Cmd::Location => {
                 println!("You are at {}.", player.location.borrow().to_string().bold());
