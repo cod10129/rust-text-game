@@ -54,7 +54,7 @@ fn boss() -> AO {
         let mut enemy = Enemy::new(
             "BOSS".red().to_string(),
             8,
-            |hp: u16| {
+            |hp| {
                 if hp <= 1 { 2 }
                 else { 1 }
             },
@@ -74,39 +74,25 @@ fn boss() -> AO {
     AO::new("BOSS", "THE BOSS", battle)
 }
 
-fn treasure_door() -> AO {
-    let open = |p: &mut Player| {
-        if p.flags.contains_key("treasure1") {
-            cutscene![
-                ("The door slowly opens.", 1000)
-            ].play();
-            p.location.borrow_mut().rem_object(&"North Door".fmt());
-            /*
-            let treasure = Loc::new("Treasure Room", HashMap::new());
-            Loc::attach(&p.location, &treasure, MC::North);
-            let cave = p.location.w().unwrap().n().unwrap();
-            Loc::attach(&p.location.n().unwrap(), &cave, MC::West);
-            */
-        } else {
-            cutscene![
-                ("You do not have the key to this door.", 1000)
-            ].play();
-        }
-    };
-
-    AO::new("North Door", "A locked door that leads north.", open)
-}
-
 fn get_locations() -> RfcLoc {
     let empty_map = HashMap::new();
     let cave = Loc::new("Cave", empty_map.clone());
     let depths = Loc::new("Depths", empty_map.clone());
     let boss_room = Loc::new("Boss Room", empty_map.clone());
     boss_room.add_object(boss());
-    boss_room.add_object(treasure_door());
     let treasure = Loc::new("Treasure Room", empty_map.clone());
     let enter_treasure: Option<CanMove> = Some(|p| {
-        todo!()
+        if p.flags.contains_key("treasure1") {
+            true
+        } else {
+            cutscene![
+                ("There is a locked door that you cannot open.", 750)
+            ].play();
+            false
+        }
+    });
+    let enter_treasure_cave: Option<CanMove> = Some(|p| {
+        p.flags.contains_key("treasure1")
     });
     let village_road = Loc::new("Village Road", empty_map.clone());
     let village = Loc::new("Village", empty_map.clone());
@@ -130,7 +116,7 @@ fn get_locations() -> RfcLoc {
     Loc::attach(&cave, &depths, MC::South, None, None);
     Loc::attach(&depths, &boss_room, MC::East, None, None);
     Loc::attach(&boss_room, &treasure, MC::North, enter_treasure, None);
-    Loc::attach(&treasure, &cave, MC::West, None, enter_treasure);
+    Loc::attach(&treasure, &cave, MC::West, None, enter_treasure_cave);
 
     spawn
 }
@@ -159,6 +145,14 @@ fn main() {
         match cmd {
             Cmd::Quit => break,
             Cmd::North | Cmd::South | Cmd::East | Cmd::West => {
+                let can_move = match cmd {
+                    Cmd::North => player.location.borrow().can_n(),
+                    Cmd::South => player.location.borrow().can_s(),
+                    Cmd::East => player.location.borrow().can_e(),
+                    Cmd::West => player.location.borrow().can_w(),
+                    _ => unreachable!()
+                };
+                if !(can_move)(&player) { continue }
                 let new = Loc::travel(
                     &player.location,
                     &cmd.clone().try_into().unwrap()

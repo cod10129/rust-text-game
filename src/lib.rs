@@ -202,7 +202,7 @@ impl Enemy {
 #[derive(Clone)]
 pub struct LocDir {
     pub loc: Option<RfcLoc>,
-    can_move: CanMove,
+    pub can_move: CanMove,
 }
 
 impl LocDir {
@@ -271,6 +271,11 @@ impl Location {
     pub fn get_w(&self) -> Option<RfcLoc> { self.w.clone().loc }
     pub fn get_e(&self) -> Option<RfcLoc> { self.e.clone().loc }
 
+    pub fn can_n(&self) -> CanMove { self.n.can_move }
+    pub fn can_s(&self) -> CanMove { self.s.can_move }
+    pub fn can_e(&self) -> CanMove { self.e.can_move }
+    pub fn can_w(&self) -> CanMove { self.w.can_move }
+
     pub fn traverse(&self, cmd: &MovementCommand) -> Option<Self> {
         use MovementCommand::*;
         let new = match cmd {
@@ -291,8 +296,7 @@ impl Location {
         }
     }
 
-    pub fn travel(locmap: &RfcLoc, direction: &MovementCommand, player: &Player) -> Option<Location> {
-        if locmap.borrow().
+    pub fn travel(locmap: &RfcLoc, direction: &MovementCommand) -> Option<Location> {
         locmap.borrow().traverse(direction)
     }
 
